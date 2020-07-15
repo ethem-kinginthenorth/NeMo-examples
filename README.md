@@ -18,8 +18,13 @@ I also provided two docker file: 1) `dockerfile.nemo_dlprof` derived from an Nvi
 
 I usually use the following code `docker build -t nemo_dlprof . -f dockerfile.nemo_dlprof`. Then I use the following command to start a container:
 ```
-docker run -it --rm -v /home/ecan:/ecan \
+docker run -it --rm -v /home/ethem:/ethem \
 --gpus device=2 \
---shm-size=16g -p 12345:8080 -p 16006:6006 -p 16007:6007 -p 16008:6008 --ulimit memlock=-1 --ulimit stack=67108864 \
+--shm-size=16g -p 12345:8080 -p 16006:6006 -p 16007:6007 -p 16008:6008 \
+--ulimit memlock=-1 --ulimit stack=67108864 \
 --pid=host nemo_dlprof
 ```
+
+I forward 8080, 6006, and 6007 ports to other ports as they are usually busy in a shared served - feel free to adjust according to your needs.
+
+I alsu use `--pid=host` this helps me see PIDs on `nvidia-smi` calls.
