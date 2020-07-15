@@ -13,4 +13,5 @@ This small project has some NeMo examples that covers some of the features inclu
 
 These notebooks are derived from the NeMo [repo](https://github.com/NVIDIA/NeMo)
 
-
+I also provided two docker file: 1) `dockerfile.nemo_dlprof` derived from an Nvidia container and 
+2) `dockerfile.nemo_pyprof` derived from a Google container. I tested both locally and on Google AI platform. They work. That said, I could not get tensorboard working on ai platform and found some github issues related with the issues I am having.
