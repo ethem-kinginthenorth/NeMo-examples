@@ -27,4 +27,7 @@ docker run -it --rm -v /home/ethem:/ethem \
 
 I forward 8080, 6006, and 6007 ports to other ports as they are usually busy in a shared served - feel free to adjust according to your needs.
 
-I alsu use `--pid=host` this helps me see PIDs on `nvidia-smi` calls.
+I also use `--pid=host` this helps me see PIDs on `nvidia-smi` calls.
+
+An entry point is added to the containers, so it will kick jupyterlab and you can connect via `http://<server_ip>:12345`. For tensorboard `http://<server_ip>:16006`.
+
