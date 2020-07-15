@@ -17,9 +17,9 @@ I also provided two docker file: 1) `dockerfile.nemo_dlprof` derived from an Nvi
 2) `dockerfile.nemo_pyprof` derived from a Google container. I tested both locally and on Google AI platform. They work. That said, I could not get tensorboard working on ai platform and found some github issues related with the issues I am having.
 
 I usually use the following code `docker build -t nemo_dlprof . -f dockerfile.nemo_dlprof`. Then I use the following command to start a container:
-`
+```
 docker run -it --rm -v /home/ecan:/ecan \
 --gpus device=2 \
 --shm-size=16g -p 12345:8080 -p 16006:6006 -p 16007:6007 -p 16008:6008 --ulimit memlock=-1 --ulimit stack=67108864 \
 --pid=host nemo_dlprof
-`
+```
