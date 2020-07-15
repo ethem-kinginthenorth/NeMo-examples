@@ -1,0 +1,89 @@
+#
+# This example Dockerfile illustrates a method to apply
+# patches to the source code in NVIDIA's TensorFlow
+# container image and to rebuild TensorFlow.  The RUN command
+# included below will rebuild TensorFlow in the same way as
+# it was built in the original image.
+#
+# By applying customizations through a Dockerfile and
+# `docker build` in this manner rather than modifying the
+# container interactively, it will be straightforward to
+# apply the same changes to later versions of the TensorFlow
+# container image.
+#
+# https://docs.docker.com/engine/reference/builder/
+#
+#FROM nvcr.io/nvidia/nemo:v0.10
+#
+#FROM nvcr.io/nvidia/pytorch:20.06-py3
+#FROM gcr.io/deeplearning-platform-release/pytorch-gpu
+FROM gcr.io/deeplearning-platform-release/pytorch-gpu
+#
+LABEL maintainer="Ethem Can"
+
+# Install my-extra-package-1 and my-extra-package-2
+
+RUN apt-get update && apt-get install -y lsb-core && export GCSFUSE_REPO=gcsfuse-`lsb_release -c -s` && \
+    echo "deb http://packages.cloud.google.com/apt $GCSFUSE_REPO main" | tee /etc/apt/sources.list.d/gcsfuse.list && \
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
+    apt-get update && apt-get install -y gcsfuse && \
+    echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
+    apt-get install -y apt-transport-https ca-certificates && \
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add - && \
+    apt-get update && apt-get install -y google-cloud-sdk && \
+    update-alternatives --install /usr/bin/python python /usr/bin/python3 30
+
+
+# this is required for nemo
+RUN apt-get install -y libsndfile1-dev && apt-get install -y libsndfile1 && apt-get install -y ffmpeg && pip install Cython
+RUN apt-get install -y sox
+
+# Reset default working directory
+WORKDIR /workspace
+RUN mkdir /workspace/workshop
+
+# to change Google's default jupyter notebook configs
+ADD jupyter_notebook_config.py /root/.jupyter
+ADD notebooks /workspace/workshop/.
+
+# install nemo
+RUN pip install nemo_toolkit[all]==0.10.1
+
+# install apex
+RUN git clone https://github.com/NVIDIA/apex.git
+RUN cd /workspace/apex && pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
+
+# install pyprof 
+# you can also use the original branch and I used this as there were 
+# a couple of issues solved but not tested/released
+RUN git clone https://github.com/ethem-kinginthenorth/PyProf.git
+RUN pip install /workspace/PyProf
+ENV PYPROF=/workspace/PyProf/pyprof
+
+# more directory adjustments
+RUN mkdir -p /workspace/data
+RUN mkdir -p /workspace/data2
+RUN mkdir -p /workspace/working
+RUN mv /workspace/workshop/an4_checkpoints /workspace/data2/.
+RUN mv /workspace/workshop/an4_checkpoints2 /workspace/data2/.
+
+# there was a bug due to huggingface changes this is to fix it on nemo 0.10
+RUN mv /workspace/workshop/albert_nm.py /opt/conda/lib/python3.6/site-packages/nemo/collections/nlp/nm/trainables/common/huggingface/.
+RUN mv /workspace/workshop/bert_nm.py /opt/conda/lib/python3.6/site-packages/nemo/collections/nlp/nm/trainables/common/huggingface/.
+RUN mv /workspace/workshop/roberta_nm.py /opt/conda/lib/python3.6/site-packages/nemo/collections/nlp/nm/trainables/common/huggingface/.
+
+RUN conda install nodejs
+RUN apt-get install -y npm
+RUN pip install jupyterlab-nvdashboard 
+RUN jupyter labextension install jupyterlab-nvdashboard
+
+
+WORKDIR /workspace/workshop
+
+EXPOSE 8080
+EXPOSE 6006
+EXPOSE 6007
+
+ADD run.sh /workspace/workshop
+ENTRYPOINT ["bash", "run.sh"]
+
